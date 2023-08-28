@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="Black">
+    <option name="executionMode" value="BINARY" />
+    <option name="pathToExecutable" value="C:\ProgramData\anaconda3\Scripts\black.exe" />
+    <option name="sdkUUID" value="7c3c192e-3665-4c88-b727-b3580b3c9478" />
+  </component>
   <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.10 (Naver_Series_Novel_Info_Crawling)" project-jdk-type="Python SDK" />
 </project>

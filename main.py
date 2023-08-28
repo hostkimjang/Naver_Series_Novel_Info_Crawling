@@ -1,41 +1,33 @@
-import time
 import requests
-import pprint
-import re
 from bs4 import BeautifulSoup as bs
-
+from sort_data import sort_data
+from store import store_info
 
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36"
 }
 
-for i in range(1, 2):
-    url = f"https://series.naver.com/novel/categoryProductList.series?categoryTypeCode=all&page={i}"
+def get_last_num():
+    url = "https://series.naver.com/novel/categoryProductList.series?categoryTypeCode=all&page=1"
     response = requests.get(url=url, headers=headers)
     tmp = bs(response.text, "lxml")
-    page = tmp.select("#content > div > ul > li")
+    last_num = tmp.select("#content > div > div > div.total")[0].text
+    last_num = last_num.replace("총", "").replace(",", "").replace("개 작품", "")
+    last_num = (round(int(last_num)/25) + 1)
+    return int(last_num)
 
-    for i in page:
-        episode_status = i.select("div > h3 > em.ico.ico_update")[0].text
-        title = i.select("div > h3 > a")[0].text
-        scroe = i.select("div > p.info > em.score_num")[0].text
-        info = re.sub(r'\s+', ' ', i.select("div > p.dsc")[0].text).strip()
-        author = i.select("div > p.info > span.author")[0].text
-        thumbnail = i.select("a > img")[0]['src']
-        a = i.select("div h3 a")
-        a_href = a[0]['href']
-
-        print(episode_status)
-        print(title)
-        pprint.pprint(info)
-        print(author)
-        print(thumbnail)
-        print(a_href)
-        print(scroe)
+def get_novel_info(last_num, novel_list):
+    for i in range(1, last_num):
+        url = f"https://series.naver.com/novel/categoryProductList.series?categoryTypeCode=all&page={i}"
+        response = requests.get(url=url, headers=headers)
+        tmp = bs(response.text, "lxml")
+        page = tmp.select("#content > div > ul > li")
+        sort_data(page, novel_list)
+        print(f"{i}페이지 완료")
+        store_info(novel_list)
 
 
-
-        time.sleep(100)
-
-        # content > div > ul > li:nth-child(1) > div > h3 > a
-    time.sleep(100)
+novel_list = []
+last_num = 5
+#last_num = get_last_num()
+get_novel_info(last_num, novel_list)
