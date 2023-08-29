@@ -23,3 +23,13 @@ def store_info(info_list):
         print(f"총 {count}개의 데이터가 저장되었습니다.")
         print("store is done")
 
+
+def load_data():
+    with open("NaverSeries_Novel_Info.json", "rt", encoding="utf-8") as f:
+        novel_data = json.load(f)
+        return novel_data
+
+def store_final(info_list):
+    with open("NaverSeries_Novel_Info_Final.json", "wt", encoding="utf-8") as f:
+        json.dump(info_list, f, ensure_ascii=False, indent=4)
+    print("store is done")

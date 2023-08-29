@@ -1,11 +1,12 @@
 import time
-
 import requests
 import pprint
 from bs4 import BeautifulSoup as bs
 from sort_data import sort_data
+from sort_data import info_supplement
 from store import store_info
 from store import load_data
+from store import store_final
 
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36"
@@ -30,16 +31,14 @@ def get_novel_info(last_num, novel_list):
         print(f"{i}페이지 완료")
     store_info(novel_list)
 
-def get_more_info(nove_list):
-    nove_list = load_data()
-    for i in nove_list:
-        locate = i['locate']
-        print(locate)
-        url = f"https://series.naver.com/{locate}"
+def get_more_info(novel_list):
+    novel_list = load_data()
+    info_supplement(novel_list)
+    store_final(novel_list)
 
 
 novel_list = []
 last_num = 5
 #last_num = get_last_num()
-get_novel_info(last_num, novel_list)
-#get_more_info(novel_list)
+#get_novel_info(last_num, novel_list)
+get_more_info(novel_list)
