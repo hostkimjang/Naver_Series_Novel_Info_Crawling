@@ -6,15 +6,18 @@ def store_info(info_list):
         for info in info_list:
             novel_dict = {
                 "platform": info.platform,
+                "id": info.id,
                 "title": info.title,
-                "info": info.info,
                 "author": info.author,
+                "info": info.info,
+                "chapter": info.chapter,
                 "agegrade": info.agegrade,
                 "score": info.score,
                 "new_status": info.new_status,
                 "content_type": info.content_type,
                 "locate": info.locate,
-                "thumbnail": info.thumbnail
+                "thumbnail": info.thumbnail,
+                "last_update": info.last_update
             }
             novel_data.append(novel_dict)
         json.dump(novel_data, f, ensure_ascii=False, indent=4)
