@@ -7,6 +7,7 @@ from sort_data import info_supplement
 from store import store_info
 from store import load_data
 from store import store_final
+from naver_api import crawl_novel_views_api
 
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36"
@@ -63,8 +64,14 @@ def get_novel_info_api(end_num):
             break
 
         page += len(data)
-        new_sort_data(data, novel_list, count)
+        #pprint.pprint(data)
+        new_sort_data(data, novel_list)
+        store_info(novel_list)
 
+
+def get_novel_views_api():
+    novel_list = load_data()
+    crawl_novel_views_api(novel_list)
 
 
 # novel_list = []
@@ -73,7 +80,7 @@ def get_novel_info_api(end_num):
 # get_novel_info(last_num, novel_list)
 #get_more_info(novel_list)
 
-
 if __name__ == '__main__':
     end_num = 3
-    get_novel_info_api(end_num)
+    #get_novel_info_api(end_num)
+    get_novel_views_api()
