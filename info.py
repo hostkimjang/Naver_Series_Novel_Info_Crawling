@@ -1,7 +1,8 @@
 class NovelInfo:
-    def __init__(self, platform, id, title, info, author, chapter, agegrade, score, new_status, content_type, locate, thumbnail, last_update):
+    def __init__(self, platform, id, series_id, title, info, author, chapter, agegrade, score, new_status, content_type, locate, thumbnail, last_update):
         self.platform = platform
         self.id = id
+        self.series_id = series_id
         self.title = title
         self.info = info
         self.author = author
@@ -17,6 +18,7 @@ class NovelInfo:
     def __str__(self, *args, **kwargs):
         return (f"platform: {self.platform}\n"
                 f"id: {self.id}\n"
+                f"series_id: {self.series_id}\n"
                 f"title: {self.title}\n"
                 f"info: {self.info}\n"
                 f"author: {self.author}\n"
@@ -35,6 +37,7 @@ class NovelInfo:
         return {
             "platform": self.platform,
             "id": self.id,
+            "series_id": self.series_id,
             "title": self.title,
             "info": self.info,
             "author": self.author,
@@ -51,10 +54,11 @@ class NovelInfo:
 
 
 
-def set_novel_info(platform, id, title, info, author, chapter, agegrade, score, new_status, content_type, locate, thumbnail, last_update):
+def set_novel_info(platform, id, series_id, title, info, author, chapter, agegrade, score, new_status, content_type, locate, thumbnail, last_update):
     print("-" * 100)
     print(f"platform: {platform}")
     print(f"id: {id}")
+    print(f"series_id: {series_id}")
     print(f"title: {title}")
     print(f"info: {info}")
     print(f"author: {author}")
@@ -67,4 +71,4 @@ def set_novel_info(platform, id, title, info, author, chapter, agegrade, score, 
     print(f"last_update: {last_update}")
     print(f"locate: {locate}")
     print("-" * 100)
-    return NovelInfo(platform, id, title, info, author, chapter, agegrade, score, new_status, content_type, locate, thumbnail, last_update)
+    return NovelInfo(platform, id, series_id, title, info, author, chapter, agegrade, score, new_status, content_type, locate, thumbnail, last_update)

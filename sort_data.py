@@ -99,6 +99,7 @@ def info_supplement(novel_list):
 def new_sort_data(data, novel_list):
     for i in data:
         id = i['productNo']
+        series_id = i['originalProductId']
         title = i['expansionProductName']
         info = i['synopsis']
         author = i['authorNames']
@@ -114,6 +115,7 @@ def new_sort_data(data, novel_list):
 
         novel_info = set_novel_info(platform="NaverSeries",
                                     id=id,
+                                    series_id=series_id,
                                     title=title,
                                     info=info,
                                     author=author,

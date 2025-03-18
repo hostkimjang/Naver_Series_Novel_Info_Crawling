@@ -73,7 +73,6 @@ def get_novel_views_api():
     novel_list = load_data()
     crawl_novel_views_api(novel_list)
 
-
 # novel_list = []
 # last_num = 2
 #last_num = get_last_num()
@@ -81,6 +80,9 @@ def get_novel_views_api():
 #get_more_info(novel_list)
 
 if __name__ == '__main__':
-    end_num = 3
-    #get_novel_info_api(end_num)
+    start = time.time()
+    end_num = 10
+    get_novel_info_api(end_num)
     get_novel_views_api()
+    end = time.time()
+    pprint.pprint(f"크롤링 소요시간: {end - start}초")

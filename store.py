@@ -7,6 +7,7 @@ def store_info(info_list):
             novel_dict = {
                 "platform": info.platform,
                 "id": info.id,
+                "series_id": info.series_id,
                 "title": info.title,
                 "author": info.author,
                 "info": info.info,
