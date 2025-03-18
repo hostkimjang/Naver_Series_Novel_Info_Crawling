@@ -98,16 +98,33 @@ def info_supplement(novel_list):
 
 def new_sort_data(data, novel_list):
     for i in data:
-        pprint.pprint("NaverSeries")
-        pprint.pprint(i['productNo'])
-        pprint.pprint(i['productType'])
-        pprint.pprint(i['expansionProductName'])
-        pprint.pprint(i['authorNames'])
-        pprint.pprint(i['synopsis'])
-        pprint.pprint(i['totalVolumeCount'])
-        pprint.pprint(i['novelInfo'])
-        pprint.pprint(i['hashTagListString'])
-        pprint.pprint(i['originalCopyThumbnailUrl'])
-        pprint.pprint(i['starScore'])
-        pprint.pprint(i['lastVolumeUpdateDate'])
-        pprint.pprint(i['seeingGradeCodeType'])
+        id = i['productNo']
+        title = i['expansionProductName']
+        info = i['synopsis']
+        author = i['authorNames']
+        chapter = i['totalVolumeCount']
+        agegrade = i['seeingGradeCodeType']
+        score = i['starScore']
+        new_status = ""
+        content_type = i['productType']
+        locate = i['detailPCPageUrlByNstoreKey']
+        thumbnail = i['originalCopyThumbnailUrl']
+        last_update = i['lastVolumeUpdateDate']
+
+
+        novel_info = set_novel_info(platform="NaverSeries",
+                                    id=id,
+                                    title=title,
+                                    info=info,
+                                    author=author,
+                                    chapter=chapter,
+                                    agegrade=agegrade,
+                                    score=score,
+                                    new_status=new_status,
+                                    content_type=content_type,
+                                    locate=locate,
+                                    thumbnail=thumbnail,
+                                    last_update=last_update
+                                    )
+        novel_list.append(novel_info)
+
