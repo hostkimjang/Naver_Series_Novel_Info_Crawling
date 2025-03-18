@@ -13,6 +13,7 @@ headers = {
 
 def sort_data(page, novel_list):
     for i in page:
+        pprint.pprint(i)
         episode_status = i.select("div > h3 > em.ico")
         if not episode_status:
             episode_status = "No"
@@ -94,3 +95,19 @@ def info_supplement(novel_list):
         pprint.pprint(novel, sort_dicts=False)
         print(f"{count}번째 데이터가 추가되었습니다.")
         count += 1
+
+def new_sort_data(data, novel_list):
+    for i in data:
+        pprint.pprint("NaverSeries")
+        pprint.pprint(i['productNo'])
+        pprint.pprint(i['productType'])
+        pprint.pprint(i['expansionProductName'])
+        pprint.pprint(i['authorNames'])
+        pprint.pprint(i['synopsis'])
+        pprint.pprint(i['totalVolumeCount'])
+        pprint.pprint(i['novelInfo'])
+        pprint.pprint(i['hashTagListString'])
+        pprint.pprint(i['originalCopyThumbnailUrl'])
+        pprint.pprint(i['starScore'])
+        pprint.pprint(i['lastVolumeUpdateDate'])
+        pprint.pprint(i['seeingGradeCodeType'])
