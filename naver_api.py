@@ -1,4 +1,5 @@
 import base64
+import concurrent.futures
 import hashlib
 import hmac
 import os
@@ -14,8 +15,10 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
+from store import store_final
 
 load_dotenv()
+max_worker = 10
 
 headers = {
     "User-Agent": "NaverBooks/3.48.0 (Android OS 11; SM-S908E) #PocketReader_AndroidPhone",
@@ -81,7 +84,7 @@ def get_naver_cookies(username: str, password: str) -> dict:
         # 패스워드 입력 필드가 나타날 때까지 대기
         pw_input = wait.until(EC.presence_of_element_located((By.ID, "pw")))
         pw_input.click()
-        print(f"Password 입력: {password}")
+        #print(f"Password 입력: {password}")
         # JavaScript로 직접 값 주입
         driver.execute_script("arguments[0].value = arguments[1];", pw_input, password)
         time.sleep(1)
@@ -153,19 +156,19 @@ def is_cookie_valid(cookies):
         return False
 
 
-def crawl_naver(base_url, secret_key, cookies: dict, naver_id, naver_pw, interval=5):
+def crawl_naver(base_url, secret_key, cookies: dict, naver_id, naver_pw):
     """
     네이버 시리즈 API를 크롤링하고, 쿠키가 만료되면 갱신합니다.
     """
     url = get_hmac_url(base_url, secret_key)
-    print("Requesting:", url)
+    # print("Requesting:", url)
 
     # requests 세션으로 쿠키 통합
     session = requests.Session()
     session.cookies.update(cookies)
 
     try:
-        response = session.get(url, headers=headers, verify=False)
+        response = session.get(url, headers=headers)
         if response.ok:
             print("Success:", response.status_code)
             print(response.text)
@@ -178,7 +181,7 @@ def crawl_naver(base_url, secret_key, cookies: dict, naver_id, naver_pw, interva
                 if new_cookies:
                     print("새로운 쿠키 획득 완료:", new_cookies)
                     update_env_file(new_cookies)  # .env 파일 업데이트
-                    return crawl_naver(base_url, secret_key, new_cookies, naver_id, naver_pw, interval)  # 재시도
+                    return crawl_naver(base_url, secret_key, new_cookies, naver_id, naver_pw)  # 재시도
                 else:
                     print("쿠키 갱신 실패.")
                     return None
@@ -187,16 +190,110 @@ def crawl_naver(base_url, secret_key, cookies: dict, naver_id, naver_pw, interva
     except Exception as e:
         print("Exception:", str(e))
         return None
-    finally:
-        time.sleep(interval)
+
+# def crawl_novel_views_api(novel_list):
+#     ready_result = crawl_ready_run()
+#
+#     if ready_result is None:
+#         print("쿠키 준비 실패")
+#         return
+#
+#     cookies, naver_id, naver_pw = ready_result
+#
+#     for i in novel_list:
+#         url = f"https://apis.naver.com/series-app/series/v4/contents/{(i['series_id'])}?recommendContents=true&platformType=SERIES_NORMAL"
+#         pprint.pprint(url)
+#
+#         # 크롤링 실행
+#         response = crawl_naver(url, naver_api_secret_key, cookies, naver_id, naver_pw)
+#
+#         if response and 'result' in response and 'contents' in response['result']:
+#             contents = response['result']['contents']
+#
+#             if 'saleVolumeCount' in contents:
+#                 sale_volume = contents['saleVolumeCount']
+#                 # Store full saleVolumeCount object
+#                 i['view'] = sale_volume
+#
+#                 # You can also extract specific fields if needed
+#                 # For example: i['view_count'] = f"{sale_volume['countPrefix']}{sale_volume['unitPostfix']}"
+#
+#                 print(f"View count added for {i['title']}: {sale_volume}")
+#             else:
+#                 i['view'] = None
+#                 print(f"No saleVolumeCount found for {i['title']}")
+#         else:
+#             i['view'] = None
+#             print(f"Failed to get data for {i['title']}")
+
+def fetch_novel_view(novel, cookies, secret_key, naver_id, naver_pw):
+    url = f"https://apis.naver.com/series-app/series/v4/contents/{novel['series_id']}?recommendContents=true&platformType=SERIES_NORMAL"
+    print("Requesting:", url)
+    response = crawl_naver(url, secret_key, cookies, naver_id, naver_pw)
+    if response and 'result' in response and 'contents' in response['result']:
+        contents = response['result']['contents']
+        if 'saleVolumeCount' in contents:
+            sale_volume = contents['saleVolumeCount']
+            novel['view'] = sale_volume
+            print(f"View count added for {novel['title']}: {sale_volume}")
+        else:
+            novel['view'] = None
+            print(f"No saleVolumeCount found for {novel['title']}")
+    else:
+        novel['view'] = None
+        print(f"Failed to get data for {novel['title']}")
+    return novel
 
 
 def crawl_novel_views_api(novel_list):
-    url = f"https://apis.naver.com/series-app/series/v4/contents/{str(i )}?recommendContents=true&platformType=SERIES_NORMAL"
-    for i in novel_list:
-        pprint.pprint(url+str(i['id']))
-    return
+    ready_result = crawl_ready_run()
+    if ready_result is None:
+        print("쿠키 준비 실패")
+        return
+    cookies, naver_id, naver_pw = ready_result
 
+    # ThreadPoolExecutor로 병렬 요청 실행
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_worker) as executor:
+        futures = [
+            executor.submit(fetch_novel_view, novel, cookies, naver_api_secret_key, naver_id, naver_pw)
+            for novel in novel_list
+        ]
+        # 모든 요청이 완료될 때까지 대기
+        concurrent.futures.wait(futures)
+
+    store_final(novel_list)
+
+
+
+def crawl_ready_run():
+    naver_id = os.environ.get("NAVER_ID")
+    naver_pw = os.environ.get("NAVER_PW")
+    nid_aut = os.environ.get("NAVER_COOKIE_NID_AUT")
+    nid_ses = os.environ.get("NAVER_COOKIE_NID_SES")
+
+    try:
+        if not naver_id or not naver_pw:
+            raise Exception("환경변수에 NAVER_ID와 NAVER_PW를 설정해주세요.")
+
+        cookies = {}
+        if nid_aut and nid_ses:
+            cookies["NID_AUT"] = nid_aut
+            cookies["NID_SES"] = nid_ses
+            pprint.pprint("쿠키 존재 확인.")
+            pprint.pprint(cookies)
+        else:
+            pprint.pprint("네이버 쿠키가 존재 하지 않습니다. 로그인후 쿠키를 받아옵니다.")
+            # 로그인 후 쿠키 획득
+            cookies = get_naver_cookies(naver_id, naver_pw)
+            # 쿠키 env에 저장
+            update_env_file(cookies)
+            print("획득한 쿠키:", cookies)
+
+        return cookies, naver_id, naver_pw
+
+    except Exception as e:
+        print(f"오류: {e}")
+        return None, None, None
 
 if __name__ == '__main__':
     # 네이버 로그인 정보 (실제 값으로 대체)
@@ -207,7 +304,6 @@ if __name__ == '__main__':
 
     # 테스트 URL
     test_url = "https://apis.naver.com/series-app/series/v4/contents/569813?recommendContents=true&platformType=SERIES_NORMAL"
-
 
     try:
         if not naver_id or not naver_pw:
@@ -228,6 +324,6 @@ if __name__ == '__main__':
             print("획득한 쿠키:", cookies)
 
         # 크롤링 실행
-        crawl_naver(base_url, naver_api_secret_key, cookies, naver_id, naver_pw)
+        crawl_naver(test_url, naver_api_secret_key, cookies, naver_id, naver_pw)
     except Exception as e:
         print(f"오류: {e}")
