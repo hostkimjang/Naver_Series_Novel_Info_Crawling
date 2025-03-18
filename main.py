@@ -2,7 +2,7 @@ import time
 import requests
 import pprint
 from bs4 import BeautifulSoup as bs
-from sort_data import sort_data
+from sort_data import sort_data, new_sort_data
 from sort_data import info_supplement
 from store import store_info
 from store import load_data
@@ -36,9 +36,44 @@ def get_more_info(novel_list):
     info_supplement(novel_list)
     store_final(novel_list)
 
+def get_novel_info_api(end_num):
+    novel_list = []
+    url = f"https://m.series.naver.com/novel/categoryProductMoreList.series"
+    page = 0
+    # response = requests.get(url=url, headers=headers, params=params)
+    # data = response.json().get("productList")
+    # pprint.pprint(data)
+    # pprint.pprint(len(data))
 
-novel_list = []
-last_num = 5
+    for i in range(0, end_num):
+        params = {
+            "categoryTypeCode": "all",
+            "genreCode:": "",
+            "orderTypeCode": "new",
+            "isFreePassChecked": "false",
+            "start": f"{page}"
+        }
+
+        pprint.pprint(f"페이지 {page} 작업")
+        response = requests.get(url=url, headers=headers, params=params)
+        data = response.json().get("productList")
+
+        if data == []:
+            pprint.pprint(f"더 이상 없음 순회 종료.")
+            break
+
+        page += len(data)
+        new_sort_data(data, novel_list, count)
+
+
+
+# novel_list = []
+# last_num = 2
 #last_num = get_last_num()
-#get_novel_info(last_num, novel_list)
-get_more_info(novel_list)
+# get_novel_info(last_num, novel_list)
+#get_more_info(novel_list)
+
+
+if __name__ == '__main__':
+    end_num = 3
+    get_novel_info_api(end_num)
