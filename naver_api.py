@@ -161,7 +161,7 @@ def crawl_naver(base_url, secret_key, cookies: dict, naver_id, naver_pw):
     네이버 시리즈 API를 크롤링하고, 쿠키가 만료되면 갱신합니다.
     """
     url = get_hmac_url(base_url, secret_key)
-    # print("Requesting:", url)
+    print("Requesting:", url)
 
     # requests 세션으로 쿠키 통합
     session = requests.Session()
@@ -175,7 +175,7 @@ def crawl_naver(base_url, secret_key, cookies: dict, naver_id, naver_pw):
             return response.json()
         else:
             print("Error:", response.status_code, response.text)
-            if response.status_code in [401, 403]:  # 인증 실패 시
+            if response.status_code in [401, 403, 500]:  # 인증 실패 시
                 print("쿠키가 만료되었을 가능성이 있습니다. 쿠키를 갱신합니다.")
                 new_cookies = get_naver_cookies(naver_id, naver_pw)
                 if new_cookies:
@@ -303,7 +303,7 @@ if __name__ == '__main__':
     nid_ses = os.environ.get("NAVER_COOKIE_NID_SES")
 
     # 테스트 URL
-    test_url = "https://apis.naver.com/series-app/series/v4/contents/569813?recommendContents=true&platformType=SERIES_NORMAL"
+    test_url = "https://apis.naver.com/series-app/series/v4/contents/360163?recommendContents=true&platformType=SERIES_NORMAL"
 
     try:
         if not naver_id or not naver_pw:
