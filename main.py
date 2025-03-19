@@ -2,6 +2,8 @@ import time
 import requests
 import pprint
 from bs4 import BeautifulSoup as bs
+
+from DB_processing import store_db
 from sort_data import sort_data, new_sort_data
 from sort_data import info_supplement
 from store import store_info
@@ -72,6 +74,7 @@ def get_novel_info_api(end_num):
 def get_novel_views_api():
     novel_list = load_data()
     crawl_novel_views_api(novel_list)
+    store_db()
 
 # novel_list = []
 # last_num = 2
