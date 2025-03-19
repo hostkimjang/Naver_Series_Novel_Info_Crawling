@@ -124,6 +124,49 @@ def store_db():
             # Update logic
             print(f"{novel['id']}는 이미 존재합니다. 레코드를 업데이트합니다.")
 
+            changes = {}
+            changes = {}
+
+            # Define field mappings (novel_key, db_column_index)
+            fields = [
+                ("series_id", 1),
+                ("platform", 2),
+                ("title", 3),
+                ("info", 4),
+                ("author", 5),
+                ("locate", 6),
+                ("thumbnail", 7),
+                ("content_type", 8),
+                ("chapter", 9),
+                ("new_status", 11)
+            ]
+
+            # Special cases
+            special_fields = [
+                ("views", 10, views),
+                ("agegrade", 13, agegrade_json),
+                ("score", 14, novel.get("score")),
+                ("content_type", 15, novel.get("content_type")),
+                ("last_update", 16, novel.get("last_update"))
+            ]
+
+            # Compare regular fields
+            for field, index in fields:
+                db_value = existing_record[index]
+                novel_value = novel.get(field)
+                if db_value != novel_value:
+                    changes[field] = {"before": db_value, "after": novel_value}
+
+            # Compare special fields
+            for field, index, value in special_fields:
+                if existing_record[index] != value:
+                    changes[field] = {"before": existing_record[index], "after": value}
+
+            if changes:
+                print(f"변경된 사항: {changes}")
+                total.append({"ID": novel["id"], "Changes": changes})
+
+
             cur.execute("""
                 UPDATE novel
                 SET series_id=?, platform=?, title=?, info=?, author=?, location=?, thumbnail=?,
