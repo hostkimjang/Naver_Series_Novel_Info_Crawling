@@ -7,6 +7,7 @@ import pprint
 import time
 import urllib.parse
 import requests
+import threading
 from dotenv import load_dotenv
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -226,22 +227,31 @@ def crawl_naver(base_url, secret_key, cookies: dict, naver_id, naver_pw):
 #             i['view'] = None
 #             print(f"Failed to get data for {i['title']}")
 
-def fetch_novel_view(novel, cookies, secret_key, naver_id, naver_pw):
+def fetch_novel_view(novel, cookies, secret_key, naver_id, naver_pw, counter, lock, total_novels):
     url = f"https://apis.naver.com/series-app/series/v4/contents/{novel['series_id']}?recommendContents=true&platformType=SERIES_NORMAL"
-    print("Requesting:", url)
+
     response = crawl_naver(url, secret_key, cookies, naver_id, naver_pw)
+
+    # Update counter and print progress
+    with lock:
+        counter['processed'] += 1
+        current = counter['processed']
+        remaining = total_novels - current
+        print(f"진행 중: {current}/{total_novels} (남은 개수: {remaining}) - {novel['title']}")
+
     if response and 'result' in response and 'contents' in response['result']:
         contents = response['result']['contents']
         if 'saleVolumeCount' in contents:
             sale_volume = contents['saleVolumeCount']
             novel['view'] = sale_volume
-            print(f"View count added for {novel['title']}: {sale_volume}")
+            print(f"조회수 추가됨: {novel['title']} - {sale_volume}")
         else:
             novel['view'] = None
-            print(f"No saleVolumeCount found for {novel['title']}")
+            print(f"조회수 정보 없음: {novel['title']}")
     else:
         novel['view'] = None
-        print(f"Failed to get data for {novel['title']}")
+        print(f"데이터 가져오기 실패: {novel['title']}")
+
     return novel
 
 
@@ -252,15 +262,21 @@ def crawl_novel_views_api(novel_list):
         return
     cookies, naver_id, naver_pw = ready_result
 
+    counter = {'processed': 0}
+    lock = threading.Lock()
+    total_novels = len(novel_list)
+
     # ThreadPoolExecutor로 병렬 요청 실행
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_worker) as executor:
         futures = [
-            executor.submit(fetch_novel_view, novel, cookies, naver_api_secret_key, naver_id, naver_pw)
+            executor.submit(fetch_novel_view, novel, cookies, naver_api_secret_key,
+                           naver_id, naver_pw, counter, lock, total_novels)
             for novel in novel_list
         ]
         # 모든 요청이 완료될 때까지 대기
         concurrent.futures.wait(futures)
 
+    print(f"완료: {total_novels}개 중 {counter['processed']}개 처리됨")
     store_final(novel_list)
 
 
