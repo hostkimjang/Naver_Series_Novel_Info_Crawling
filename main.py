@@ -123,12 +123,13 @@ def get_novel_views_api():
 
 if __name__ == '__main__':
     load_dotenv()
+    print("크롤러 시작", flush=True)
     chromedriver_autoinstall.install()
-    chromedriver_autoinstall.get_version()
-    chromedriver_autoinstall.get_platform()
+    print(chromedriver_autoinstall.get_version(), flush=True)
+    print(chromedriver_autoinstall.get_platform(), flush=True)
     start = time.time()
     end_num = 110000
     #get_novel_info_api(end_num)
     get_novel_views_api()
     end = time.time()
-    pprint.pprint(f"크롤링 소요시간: {end - start}초")
+    print(f"크롤링 소요시간: {end - start}초")
