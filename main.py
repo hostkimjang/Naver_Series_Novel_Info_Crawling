@@ -122,7 +122,7 @@ def get_novel_views_api():
 if __name__ == '__main__':
     start = time.time()
     end_num = 110000
-    #get_novel_info_api(end_num)
+    get_novel_info_api(end_num)
     get_novel_views_api()
     end = time.time()
     pprint.pprint(f"크롤링 소요시간: {end - start}초")
