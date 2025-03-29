@@ -138,20 +138,21 @@ def get_hmac_url(base_url, secret_key):
 
 def is_cookie_valid(cookies):
     """Check if the Naver cookies are still valid"""
-    test_url = "https://apis.naver.com/series-app/series/v4/profile/me"
-    url = get_hmac_url(test_url, naver_api_secret_key)
-
+    url = "https://nid.naver.com/user2/help/myInfoV2"
+    # url = get_hmac_url(test_url, naver_api_secret_key)
+    print("Checking cookie validity:", url)
     session = requests.Session()
     session.cookies.update(cookies)
 
     try:
         response = session.get(url, headers=headers, verify=False)
-        # Check for unauthorized or forbidden status codes
+        # Check fo  r unauthorized or forbidden status codes
         if response.status_code in [401, 403]:
             return False
         # Check for specific error messages in response
-        if "로그인" in response.text or "인증" in response.text:
-            return False
+        if response.status_code in [200] and "네이버 아이디로 로그인" in response.text:
+            pprint.pprint("쿠키 유효성 확인 성공")
+            return True
         return True
     except Exception:
         return False
@@ -297,6 +298,14 @@ def crawl_ready_run():
             cookies["NID_SES"] = nid_ses
             pprint.pprint("쿠키 존재 확인.")
             pprint.pprint(cookies)
+            pprint.pprint("쿠키 유효성 확인 중...")
+            if not is_cookie_valid(cookies):
+                pprint.pprint("쿠키가 만료되었습니다. 로그인 후 쿠키를 받아옵니다.")
+                # 로그인 후 쿠키 획득
+                cookies = get_naver_cookies(naver_id, naver_pw)
+                # 쿠키 env에 저장
+                update_env_file(cookies)
+                print("획득한 쿠키:", cookies)
         else:
             pprint.pprint("네이버 쿠키가 존재 하지 않습니다. 로그인후 쿠키를 받아옵니다.")
             # 로그인 후 쿠키 획득
