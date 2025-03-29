@@ -6,6 +6,8 @@ import os
 import pprint
 import time
 import urllib.parse
+
+import chromedriver_autoinstall
 import requests
 import threading
 from selenium import webdriver
@@ -63,9 +65,15 @@ def get_naver_cookies(username: str, password: str) -> dict:
     """네이버 로그인 후 NID_AUT와 NID_SES 쿠키를 추출"""
     chrome_options = Options()
     chrome_options.add_argument("--headless")  # CAPTCHA 확인 위해 headless 비활성화 (성공 시 주석 해제)
+    chrome_options.add_argument("--no-sandbox") # Docker 환경 필수 옵션
+    chrome_options.add_argument("--disable-dev-shm-usage") # Docker 환경 메모리 문제 방지
+    chrome_options.add_argument("--disable-gpu") # GPU 비활성화 (일부 환경 문제 방지)
 
     # ChromeDriver 자동 설치
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+    #driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+    # 우분투 도커 ChromeDriver 자동 설치
+    chromedriver_autoinstall.install()
+    driver = webdriver.Chrome(options=chrome_options)
 
     try:
         # 네이버 로그인 페이지 이동
@@ -91,7 +99,7 @@ def get_naver_cookies(username: str, password: str) -> dict:
         # 로그인 버튼 클릭
         login_button = wait.until(EC.element_to_be_clickable((By.ID, "log.login")))
         login_button.click()
-        time.sleep(5)  # 로그인 ���리 대기
+        time.sleep(5)  # 로그인 대기
 
         # '새로운 환경' 알림에서 '등록안함' 버튼 처리
         try:
