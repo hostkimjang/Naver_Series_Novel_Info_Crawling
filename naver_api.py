@@ -75,7 +75,7 @@ def get_naver_cookies(username: str, password: str) -> dict:
         # 아이디 입력 필드가 나타날 때까지 대기
         id_input = wait.until(EC.presence_of_element_located((By.ID, "id")))
         id_input.click()
-        print(f"ID 입력: {username}")
+        print(f"ID 입력: {username}", flush=True)
         # JavaScript로 직접 값 주입 (보안 차단 우회 시도)
         driver.execute_script("arguments[0].value = arguments[1];", id_input, username)
         time.sleep(1)
@@ -97,14 +97,14 @@ def get_naver_cookies(username: str, password: str) -> dict:
         try:
             cancel_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "span.btn_cancel")))
             cancel_button.click()
-            print("기기 등록 '등록안함' 처리 완료")
+            print("기기 등록 '등록안함' 처리 완료", flush=True)
         except:
-            print("기기 등록 '등록안함' 버튼을 찾을 수 없습니다.")
+            print("기기 등록 '등록안함' 버튼을 찾을 수 없습니다.", flush=True)
 
         # CAPTCHA 여부 확인
         if "captcha" in driver.current_url.lower():
-            print("CAPTCHA가 나타났습니다. 브라우저에서 해결 후 Enter를 눌러주세요.")
-            input("계속하려면 Enter를 누르세요...")
+            print("CAPTCHA가 나타났습니다. 브라우저에서 해결 후 Enter를 눌러주세요.", flush=True)
+            input("계속하려면 Enter를 누르세요...", flush=True)
 
         # 쿠키 추출
         cookies = driver.get_cookies()
@@ -113,10 +113,10 @@ def get_naver_cookies(username: str, password: str) -> dict:
         nid_ses = cookie_dict.get("NID_SES")
 
         if nid_aut and nid_ses:
-            print("로그인 성공, 쿠키 획득 완료")
+            print("로그인 성공, 쿠키 획득 완료", flush=True)
             return {"NID_AUT": nid_aut, "NID_SES": nid_ses}
         else:
-            raise Exception("NID_AUT 또는 NID_SES 쿠키를 찾을 수 없습니다.")
+            raise Exception("NID_AUT 또는 NID_SES 쿠키를 찾을 수 없습니다.", flush=True)
 
     finally:
         driver.quit()
@@ -138,7 +138,7 @@ def is_cookie_valid(cookies):
     """Check if the Naver cookies are still valid"""
     url = "https://nid.naver.com/user2/help/myInfoV2"
     # url = get_hmac_url(test_url, naver_api_secret_key)
-    print("Checking cookie validity:", url)
+    print("Checking cookie validity:", url , flush=True)
     session = requests.Session()
     session.cookies.update(cookies)
 
@@ -147,11 +147,11 @@ def is_cookie_valid(cookies):
         #pprint.pprint(response.text)
         # Check fo  r unauthorized or forbidden status codes
         if response.status_code in [401, 403] or "<title>네이버 : 로그인</title>" in response.text:
-            print("쿠키 유효성 확인 실패:", response.status_code)
+            print("쿠키 유효성 확인 실패:", response.status_code, flush=True)
             return False
         # Check for specific error messages in response
         if response.status_code in [200] and "<title>네이버ID</title>" not in response.text:
-            print("쿠키 유효성 확인 성공")
+            print("쿠키 유효성 확인 성공", flush=True)
             return False
         return True
     except Exception:
@@ -163,7 +163,7 @@ def crawl_naver(base_url, secret_key, cookies: dict, naver_id, naver_pw):
     네이버 시리즈 API를 크롤링하고, 쿠키가 만료되면 갱신합니다.
     """
     url = get_hmac_url(base_url, secret_key)
-    print("Requesting:", url)
+    print("Requesting:", url, flush=True)
 
     # requests 세션으로 쿠키 통합
     session = requests.Session()
@@ -172,20 +172,20 @@ def crawl_naver(base_url, secret_key, cookies: dict, naver_id, naver_pw):
     try:
         response = session.get(url, headers=headers)
         if response.ok:
-            print("Success:", response.status_code)
+            print("Success:", response.status_code, flush=True)
             print(response.text)
             return response.json()
         else:
             print("Error:", response.status_code, response.text)
             if response.status_code in [401, 403, 500]:  # 인증 실패 시
-                print("쿠키가 만료되었을 가능성이 있습니다. 쿠키를 갱신합니다.")
+                print("쿠키가 만료되었을 가능성이 있습니다. 쿠키를 갱신합니다.", flush=True)
                 new_cookies = get_naver_cookies(naver_id, naver_pw)
                 if new_cookies:
-                    print("새로운 쿠키 획득 완료:", new_cookies)
+                    print("새로운 쿠키 획득 완료:", new_cookies, flush=True)
                     update_env_file(new_cookies)  # .env 파일 업데이트
                     return crawl_naver(base_url, secret_key, new_cookies, naver_id, naver_pw)  # 재시도
                 else:
-                    print("쿠키 갱신 실패.")
+                    print("쿠키 갱신 실패.", flush=True)
                     return None
             else:
                 return None
@@ -259,29 +259,30 @@ def fetch_novel_view(novel, cookies, secret_key, naver_id, naver_pw, counter, lo
 def crawl_novel_views_api(novel_list):
     ready_result = crawl_ready_run()
     if ready_result is None:
-        print("쿠키 준비 실패")
+        print("쿠키 준비 실패", flush=True)
         return
-    pprint.pprint("쿠키 준비 완료 크롤링 준비 대기중...")
-    cookies, naver_id, naver_pw = ready_result
+    else:
+        print("쿠키 준비 완료 크롤링 준비 대기중...", flush=True)
+        cookies, naver_id, naver_pw = ready_result
 
-    time.sleep(30)
+        time.sleep(30)
 
-    counter = {'processed': 0}
-    lock = threading.Lock()
-    total_novels = len(novel_list)
+        counter = {'processed': 0}
+        lock = threading.Lock()
+        total_novels = len(novel_list)
 
-    # ThreadPoolExecutor로 병렬 요청 실행
-    with concurrent.futures.ThreadPoolExecutor(max_workers=max_worker) as executor:
-        futures = [
-            executor.submit(fetch_novel_view, novel, cookies, naver_api_secret_key,
-                           naver_id, naver_pw, counter, lock, total_novels)
-            for novel in novel_list
-        ]
-        # 모든 요청이 완료될 때까지 대기
-        concurrent.futures.wait(futures)
+        # ThreadPoolExecutor로 병렬 요청 실행
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_worker) as executor:
+            futures = [
+                executor.submit(fetch_novel_view, novel, cookies, naver_api_secret_key,
+                               naver_id, naver_pw, counter, lock, total_novels)
+                for novel in novel_list
+            ]
+            # 모든 요청이 완료될 때까지 대기
+            concurrent.futures.wait(futures)
 
-    print(f"완료: {total_novels}개 중 {counter['processed']}개 처리됨")
-    store_final(novel_list)
+        print(f"완료: {total_novels}개 중 {counter['processed']}개 처리됨", flush=True)
+        store_final(novel_list)
 
 
 
@@ -299,30 +300,30 @@ def crawl_ready_run():
         if nid_aut and nid_ses:
             cookies["NID_AUT"] = nid_aut
             cookies["NID_SES"] = nid_ses
-            print("쿠키 존재 확인.")
+            print("쿠키 존재 확인.", flush=True)
             print(cookies)
-            print("쿠키 유효성 확인 중...")
+            print("쿠키 유효성 확인 중...", flush=True)
             is_valid = is_cookie_valid(cookies)
             if not is_valid:
-                print("쿠키가 만료되었습니다. 로그인 후 쿠키를 받아옵니다.")
+                print("쿠키가 만료되었습니다. 로그인 후 쿠키를 받아옵니다.", flush=True)
                 # 로그인 후 쿠키 획득
                 cookies = get_naver_cookies(naver_id, naver_pw)
                 # 쿠키 env에 저장
                 update_env_file(cookies)
-                print("획득한 쿠키:", cookies)
+                print("획득한 쿠키:", cookies, flush=True)
         else:
-            pprint.pprint("네이버 쿠키가 존재 하지 않습니다. 로그인후 쿠키를 받아옵니다.")
+            print("네이버 쿠키가 존재 하지 않습니다. 로그인후 쿠키를 받아옵니다.", flush=True)
             # 로그인 후 쿠키 획득
             cookies = get_naver_cookies(naver_id, naver_pw)
             # 쿠키 env에 저장
             update_env_file(cookies)
-            print("획득한 쿠키:", cookies)
+            print("획득한 쿠키:", cookies, flush=True)
 
-        pprint.pprint("쿠키 유효성 확인 완료!")
+        print("쿠키 유효성 확인 완료!", flush=True)
         return cookies, naver_id, naver_pw
 
     except Exception as e:
-        print(f"오류: {e}")
+        print(f"오류: {e}", flush=True)
         return None, None, None
 
 if __name__ == '__main__':
@@ -343,17 +344,17 @@ if __name__ == '__main__':
         if nid_aut and nid_ses:
             cookies["NID_AUT"] = nid_aut
             cookies["NID_SES"] = nid_ses
-            pprint.pprint("쿠키 존재 확인.")
-            pprint.pprint(cookies)
+            print("쿠키 존재 확인.", flush=True)
+            print(cookies, flush=True)
         else:
-            pprint.pprint("네이버 쿠키가 존재 하지 않습니다. 로그인후 쿠키를 받아옵니다.")
+            print("네이버 쿠키가 존재 하지 않습니다. 로그인후 쿠키를 받아옵니다.", flush=True)
             # 로그인 후 쿠키 획득
             cookies = get_naver_cookies(naver_id, naver_pw)
             # 쿠키 env에 저장
             update_env_file(cookies)
-            print("획득한 쿠키:", cookies)
+            print("획득한 쿠키:", cookies, flush=True)
 
         # 크롤링 실행
         crawl_naver(test_url, naver_api_secret_key, cookies, naver_id, naver_pw)
     except Exception as e:
-        print(f"오류: {e}")
+        print(f"오류: {e}" , flush=True)
