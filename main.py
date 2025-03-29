@@ -3,6 +3,7 @@ import concurrent
 import threading
 import time
 import aiohttp
+import chromedriver_autoinstall
 import requests
 import pprint
 from bs4 import BeautifulSoup as bs
@@ -120,9 +121,11 @@ def get_novel_views_api():
 #get_more_info(novel_list)
 
 if __name__ == '__main__':
+    chromedriver_autoinstall.install()
+    chromedriver_autoinstall.get_version()
     start = time.time()
     end_num = 110000
-    get_novel_info_api(end_num)
+    #get_novel_info_api(end_num)
     get_novel_views_api()
     end = time.time()
     pprint.pprint(f"크롤링 소요시간: {end - start}초")
