@@ -261,7 +261,10 @@ def crawl_novel_views_api(novel_list):
     if ready_result is None:
         print("쿠키 준비 실패")
         return
+    pprint.pprint("쿠키 준비 완료 크롤링 준비 대기중...")
     cookies, naver_id, naver_pw = ready_result
+
+    time.sleep(30)
 
     counter = {'processed': 0}
     lock = threading.Lock()
