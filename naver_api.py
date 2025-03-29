@@ -8,7 +8,6 @@ import time
 import urllib.parse
 import requests
 import threading
-from dotenv import load_dotenv
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
@@ -18,7 +17,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
 from store import store_final
 
-load_dotenv()
 max_worker = 10
 
 headers = {
@@ -146,13 +144,15 @@ def is_cookie_valid(cookies):
 
     try:
         response = session.get(url, headers=headers, verify=False)
+        #pprint.pprint(response.text)
         # Check fo  r unauthorized or forbidden status codes
-        if response.status_code in [401, 403]:
+        if response.status_code in [401, 403] or "<title>네이버 : 로그인</title>" in response.text:
+            print("쿠키 유효성 확인 실패:", response.status_code)
             return False
         # Check for specific error messages in response
-        if response.status_code in [200] and "네이버 아이디로 로그인" in response.text:
+        if response.status_code in [200] and "<title>네이버ID</title>" not in response.text:
             print("쿠키 유효성 확인 성공")
-            return True
+            return False
         return True
     except Exception:
         return False
@@ -302,7 +302,8 @@ def crawl_ready_run():
             print("쿠키 존재 확인.")
             print(cookies)
             print("쿠키 유효성 확인 중...")
-            if not is_cookie_valid(cookies):
+            is_valid = is_cookie_valid(cookies)
+            if not is_valid:
                 print("쿠키가 만료되었습니다. 로그인 후 쿠키를 받아옵니다.")
                 # 로그인 후 쿠키 획득
                 cookies = get_naver_cookies(naver_id, naver_pw)
@@ -317,6 +318,7 @@ def crawl_ready_run():
             update_env_file(cookies)
             print("획득한 쿠키:", cookies)
 
+        pprint.pprint("쿠키 유효성 확인 완료!")
         return cookies, naver_id, naver_pw
 
     except Exception as e:
