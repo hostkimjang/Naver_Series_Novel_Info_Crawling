@@ -151,7 +151,7 @@ def is_cookie_valid(cookies):
             return False
         # Check for specific error messages in response
         if response.status_code in [200] and "네이버 아이디로 로그인" in response.text:
-            pprint.pprint("쿠키 유효성 확인 성공")
+            print("쿠키 유효성 확인 성공")
             return True
         return True
     except Exception:
@@ -299,11 +299,11 @@ def crawl_ready_run():
         if nid_aut and nid_ses:
             cookies["NID_AUT"] = nid_aut
             cookies["NID_SES"] = nid_ses
-            pprint.pprint("쿠키 존재 확인.")
-            pprint.pprint(cookies)
-            pprint.pprint("쿠키 유효성 확인 중...")
+            print("쿠키 존재 확인.")
+            print(cookies)
+            print("쿠키 유효성 확인 중...")
             if not is_cookie_valid(cookies):
-                pprint.pprint("쿠키가 만료되었습니다. 로그인 후 쿠키를 받아옵니다.")
+                print("쿠키가 만료되었습니다. 로그인 후 쿠키를 받아옵니다.")
                 # 로그인 후 쿠키 획득
                 cookies = get_naver_cookies(naver_id, naver_pw)
                 # 쿠키 env에 저장
