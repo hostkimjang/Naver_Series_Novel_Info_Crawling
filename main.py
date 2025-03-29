@@ -3,6 +3,7 @@ import concurrent
 import threading
 import time
 import aiohttp
+from dotenv import load_dotenv
 import chromedriver_autoinstall
 import requests
 import pprint
@@ -121,8 +122,10 @@ def get_novel_views_api():
 #get_more_info(novel_list)
 
 if __name__ == '__main__':
+    load_dotenv()
     chromedriver_autoinstall.install()
     chromedriver_autoinstall.get_version()
+    chromedriver_autoinstall.get_platform()
     start = time.time()
     end_num = 110000
     #get_novel_info_api(end_num)
