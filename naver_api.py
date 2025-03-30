@@ -19,7 +19,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
 from store import store_final
 
-max_worker = 10
+max_worker = 50
 
 headers = {
     "User-Agent": "NaverBooks/3.48.0 (Android OS 11; SM-S908E) #PocketReader_AndroidPhone",
