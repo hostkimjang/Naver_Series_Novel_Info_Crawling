@@ -6,7 +6,6 @@ import os
 import pprint
 import time
 import urllib.parse
-
 import chromedriver_autoinstall
 import requests
 import threading
