@@ -1,6 +1,6 @@
 from pprint import pprint
 from dotenv import load_dotenv
-from sqlalchemy import create_engine, Column, BigInteger, Text, DateTime, String, Boolean, and_, Integer, text, Float
+from sqlalchemy import create_engine, Column, BigInteger, Text, DateTime, Boolean, text, Float
 from sqlalchemy.orm import declarative_base, sessionmaker
 import os
 from datetime import datetime
