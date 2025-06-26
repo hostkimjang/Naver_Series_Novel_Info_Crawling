@@ -15,6 +15,7 @@ from store import store_info
 from store import load_data
 from store import store_final
 from naver_api import crawl_novel_views_api
+from db_connect import store_db_naver_series_pg_copy
 
 max_worker = 10
 
@@ -58,9 +59,39 @@ def fetch_page(offset):
         "start": str(offset)
     }
     pprint.pprint(f"offset {offset} 요청")
-    response = requests.get(url=url, headers=headers, params=params)
-    data = response.json().get("productList")
-    return offset, data
+    
+    try:
+        response = requests.get(url=url, headers=headers, params=params, timeout=30)
+        
+        # HTTP 상태 코드 확인
+        if response.status_code != 200:
+            pprint.pprint(f"HTTP 오류 {response.status_code} for offset {offset}: {response.text[:200]}")
+            return offset, None
+        
+        # 응답 내용 확인
+        if not response.text.strip():
+            pprint.pprint(f"빈 응답 for offset {offset}")
+            return offset, None
+        
+        # JSON 파싱 시도
+        try:
+            json_data = response.json()
+            data = json_data.get("productList")
+            return offset, data
+        except requests.exceptions.JSONDecodeError as e:
+            pprint.pprint(f"JSON 파싱 오류 for offset {offset}: {e}")
+            pprint.pprint(f"응답 내용 (처음 500자): {response.text[:500]}")
+            return offset, None
+            
+    except requests.exceptions.Timeout:
+        pprint.pprint(f"타임아웃 오류 for offset {offset}")
+        return offset, None
+    except requests.exceptions.RequestException as e:
+        pprint.pprint(f"네트워크 오류 for offset {offset}: {e}")
+        return offset, None
+    except Exception as e:
+        pprint.pprint(f"예상치 못한 오류 for offset {offset}: {e}")
+        return offset, None
 
 def get_novel_info_api(end_num, batch_size=5, max_workers=max_worker):
     novel_list = []
@@ -73,39 +104,61 @@ def get_novel_info_api(end_num, batch_size=5, max_workers=max_worker):
         "isFreePassChecked": "false",
         "start": "0"
     }
-    first_response = requests.get(url=url, headers=headers, params=params)
-    first_data = first_response.json().get("productList")
-    if not first_data:
-        pprint.pprint("No data on first page")
+    
+    try:
+        first_response = requests.get(url=url, headers=headers, params=params, timeout=30)
+        if first_response.status_code != 200:
+            pprint.pprint(f"첫 페이지 요청 실패: HTTP {first_response.status_code}")
+            return
+            
+        first_data = first_response.json().get("productList")
+        if not first_data:
+            pprint.pprint("첫 페이지에 데이터가 없습니다")
+            return
+        new_sort_data(first_data, novel_list)
+        items_per_page = len(first_data)
+        pprint.pprint(f"첫 페이지 아이템 수: {items_per_page}")
+    except Exception as e:
+        pprint.pprint(f"첫 페이지 처리 중 오류: {e}")
         return
-    new_sort_data(first_data, novel_list)
-    items_per_page = len(first_data)
-    pprint.pprint(f"First page count: {items_per_page}")
 
     current_offset = items_per_page
     total_collected = len(first_data)
+    consecutive_empty_batches = 0
+    max_empty_batches = 3  # 연속으로 3번 빈 응답이 오면 중단
 
-    while total_collected < end_num:
+    while total_collected < end_num and consecutive_empty_batches < max_empty_batches:
         batch_offsets = [current_offset + i * items_per_page for i in range(batch_size)]
         empty_found = False
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             results = list(executor.map(fetch_page, batch_offsets))
 
+        batch_has_data = False
         for offset, data in results:
+            if data is None:
+                pprint.pprint(f"Offset {offset}에서 데이터 없음")
+                continue
             if not data:
-                pprint.pprint(f"Offset {offset} returned no data. Terminating batch processing.")
-                empty_found = True
-                break
+                pprint.pprint(f"Offset {offset}에서 빈 데이터 반환")
+                continue
             new_sort_data(data, novel_list)
             total_collected += len(data)
-        if empty_found:
-            break
+            batch_has_data = True
+
+        if not batch_has_data:
+            consecutive_empty_batches += 1
+            pprint.pprint(f"연속 빈 배치: {consecutive_empty_batches}/{max_empty_batches}")
+        else:
+            consecutive_empty_batches = 0  # 데이터가 있으면 카운터 리셋
 
         current_offset = batch_offsets[-1] + items_per_page
-        pprint.pprint(f"Progress: {total_collected} records collected so far.")
+        pprint.pprint(f"진행 상황: 지금까지 {total_collected}개 수집됨")
 
-    pprint.pprint(f"Total collected: {total_collected} novel items")
+    if consecutive_empty_batches >= max_empty_batches:
+        pprint.pprint(f"연속 {max_empty_batches}번 빈 응답으로 인해 크롤링 중단")
+
+    pprint.pprint(f"총 수집된 소설: {total_collected}개")
     store_info(novel_list)
     return novel_list
 
@@ -114,6 +167,7 @@ def get_novel_views_api():
     novel_list = load_data()
     crawl_novel_views_api(novel_list)
     store_db()
+    store_db_naver_series_pg_copy()
 
 # novel_list = []
 # last_num = 2
