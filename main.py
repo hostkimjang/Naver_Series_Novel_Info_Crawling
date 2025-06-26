@@ -1,8 +1,5 @@
-import asyncio
 import concurrent
-import threading
 import time
-import aiohttp
 from dotenv import load_dotenv
 import chromedriver_autoinstall
 import requests
